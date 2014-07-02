@@ -57,14 +57,20 @@
 (defcustom subcommand-list '("st") "available subcommand list")
 
 (defun eshell-git (subcommand &rest args)
+  "Main function to be invoked from eshell."
   (if (member subcommand subcommand-list)
       (apply (intern (concat "eshell-git-" subcommand)) args)
-    (error "Unsupported subcommand : %s" subcommand)))
+    (eshell-git-fallback subcommand args)))
 
 (defun eshell-git-st ()
   (eshell-git-unlines
    (mapcar
     (lambda (status) (concat (cdr status) " " (car status)))
     (eshell-git-get-status))))
+
+(defun eshell-git-fallback (subcommand args)
+  "Just run git with given arguments."
+  (eshell-git-invoke-command (cons subcommand args))
+  )
 
 ;;; eshell-git.el ends here

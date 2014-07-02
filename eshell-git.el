@@ -26,9 +26,29 @@
 
 (require 'cl-lib)
 
-(defun eshell-git-command (args)
+;;; utility function
+
+(defun eshell-git-lines (string)
+  (split-string string "\n" t))
+
+;;; command invoke function
+
+(defun eshell-git-invoke-command (args)
   "Run git command with args."
   (with-output-to-string
     (with-current-buffer
         standard-output
       (apply (apply-partially 'process-file "git" nil t nil) args))))
+
+;;; git accessor function
+
+(defun eshell-git-get-status ()
+  "Get git status and parse it."
+  (mapcar
+   (lambda (line) (cons (substring line 3) (substring line 0 2)))
+   (eshell-git-lines
+    (eshell-git-invoke-command '("status" "--porcelain")))))
+
+;;; user interface function
+
+;;; eshell-git.el ends here

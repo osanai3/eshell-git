@@ -26,6 +26,8 @@
 
 (require 'cl-lib)
 
+(defgroup eshell-git nil "Git frontend for eshell." :group 'convenience)
+
 ;;; utility function
 
 (defun eshell-git-lines (string)
@@ -34,14 +36,27 @@
 (defun eshell-git-unlines (strings)
   (mapconcat 'identity strings "\n"))
 
+(defun eshell-git-to-string (value)
+  (cond ((stringp value) value)
+        ((numberp value) (number-to-string value))
+        (t (error "eshell-git-to-string : Cannot convert to string %S" value))
+   ))
+
 ;;; command invoke function
+
+(defcustom eshell-git-command-option
+  '("--no-pager")
+  "always add this option to git command")
 
 (defun eshell-git-invoke-command (args)
   "Run git command with args."
-  (with-output-to-string
-    (with-current-buffer
-        standard-output
-      (apply (apply-partially 'process-file "git" nil t nil) args))))
+  (let ((string-args (mapcar 'eshell-git-to-string args)))
+    (with-output-to-string
+      (with-current-buffer
+          standard-output
+        (apply
+         (apply-partially 'process-file "git" nil t nil)
+         (append eshell-git-command-option string-args))))))
 
 ;;; git accessor function
 
@@ -54,7 +69,9 @@
 
 ;;; user interface function
 
-(defcustom subcommand-list '("st") "available subcommand list")
+(defcustom subcommand-list
+  '("st")
+  "available subcommand list" :group 'eshell-git)
 
 (defun eshell-git (subcommand &rest args)
   "Main function to be invoked from eshell."

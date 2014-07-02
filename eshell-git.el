@@ -31,6 +31,9 @@
 (defun eshell-git-lines (string)
   (split-string string "\n" t))
 
+(defun eshell-git-unlines (strings)
+  (mapconcat 'identity strings "\n"))
+
 ;;; command invoke function
 
 (defun eshell-git-invoke-command (args)
@@ -50,5 +53,18 @@
     (eshell-git-invoke-command '("status" "--porcelain")))))
 
 ;;; user interface function
+
+(defcustom subcommand-list '("st") "available subcommand list")
+
+(defun eshell-git (subcommand &rest args)
+  (if (member subcommand subcommand-list)
+      (apply (intern (concat "eshell-git-" subcommand)) args)
+    (error "Unsupported subcommand : %s" subcommand)))
+
+(defun eshell-git-st ()
+  (eshell-git-unlines
+   (mapcar
+    (lambda (status) (concat (cdr status) " " (car status)))
+    (eshell-git-get-status))))
 
 ;;; eshell-git.el ends here

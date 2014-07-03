@@ -33,14 +33,38 @@
 (defun eshell-git-lines (string)
   (split-string string "\n" t))
 
+(eval-when-compile
+  (assert
+   (equal
+    (eshell-git-lines "aaa\nbbb\n")
+    '("aaa" "bbb"))))
+
 (defun eshell-git-unlines (strings)
   (mapconcat 'identity strings "\n"))
+
+(eval-when-compile
+  (assert
+   (equal
+    (eshell-git-unlines '("aaa" "bbb"))
+    "aaa\nbbb")))
+
 
 (defun eshell-git-to-string (value)
   (cond ((stringp value) value)
         ((numberp value) (number-to-string value))
         (t (error "eshell-git-to-string : Cannot convert to string %S" value))
    ))
+
+(eval-when-compile
+  (assert
+   (equal
+    (eshell-git-to-string "aaa")
+    "aaa"))
+  (assert
+   (equal
+    (eshell-git-to-string 1)
+    "1"))
+  )
 
 ;;; command invoke function
 

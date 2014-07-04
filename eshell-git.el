@@ -72,33 +72,34 @@
   '("--no-pager")
   "always add this option to git command")
 
-(defun eshell-git-invoke-command-helper (process-file-function args)
+(defconst eshell-git-process-file-function 'process-file)
+
+(defun eshell-git-invoke-command (args)
   "Run git command with args."
   (let ((string-args (mapcar 'eshell-git-to-string args)))
     (with-output-to-string
       (with-current-buffer
           standard-output
         (apply
-         (apply-partially process-file-function "git" nil t nil)
+         (apply-partially eshell-git-process-file-function "git" nil t nil)
          (append eshell-git-command-option string-args))))))
 
-(defun eshell-git-invoke-command (args)
-  (eshell-git-invoke-command-helper 'process-file args))
-
 (eval-when-compile
-  (assert
-   (equal
-    (eshell-git-invoke-command-helper
-     (lambda (command infile buffer display &rest args)
-       (assert (equal command "git"))
-       (assert (not infile))
-       (assert buffer)
-       (assert (not display))
-       (assert (equal args (append eshell-git-command-option '("-n" "1"))))
-       (insert "out"))
-     '("-n" 1))
-    "out"
-    )))
+  (let ((eshell-git-process-file-function
+         (lambda (command infile buffer display &rest args)
+           (assert (equal command "git"))
+           (assert (not infile))
+           (assert buffer)
+           (assert (not display))
+           (assert (equal
+                    args
+                    (append eshell-git-command-option '("-n" "1"))))
+           (insert "out"))))
+    (assert
+     (equal
+      (eshell-git-invoke-command '("-n" 1))
+      "out"
+      ))))
 
 ;;; git accessor function
 

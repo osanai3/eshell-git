@@ -132,11 +132,21 @@
       (apply (intern (concat "eshell-git-" subcommand)) args)
     (eshell-git-fallback subcommand args)))
 
-(defun eshell-git-st ()
+(defun eshell-git-format-st (status-alist)
   (eshell-git-unlines
    (mapcar
     (lambda (status) (concat (cdr status) " " (car status)))
-    (eshell-git-get-status))))
+    status-alist)))
+
+(eval-when-compile
+  (assert
+   (equal
+    (eshell-git-format-st '(("aaa.el" . "MM") ("bbb.el" . "A ")))
+    "MM aaa.el\nA  bbb.el"
+    )))
+
+(defun eshell-git-st ()
+  (eshell-git-format-st (eshell-git-get-status)))
 
 (defun eshell-git-fallback (subcommand args)
   "Just run git with given arguments."

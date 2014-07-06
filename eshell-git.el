@@ -22,6 +22,11 @@
 ;; This program is git frontend for eshell.
 ;; * Use synchronous process for fast response in remote host.
 
+;;; TO DO
+;; * git diff
+;; * git log
+;; * remove delegation from git ci
+
 ;;; Code:
 
 (require 'cl-lib)

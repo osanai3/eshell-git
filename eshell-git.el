@@ -162,6 +162,11 @@
   (eshell-git-parse-status
     (eshell-git-invoke-command '("status" "--porcelain"))))
 
+(defun eshell-git-get-help (command)
+  "Get git help"
+  (eshell-git-invoke-command (list "help" command))
+)
+
 ;;; user interface function
 
 (defun eshell-git (subcommand &rest args)
@@ -201,6 +206,19 @@
   (if eshell-git-ci-delegate
       (funcall eshell-git-ci-delegate)
     (eshell-git-fallback "commit" args)))
+
+(defun eshell-git-help (command)
+  (let* ((name (format "*eshell-git help %s*" command))
+         (buffer (get-buffer name)))
+    (if buffer buffer
+      (with-current-buffer
+          (generate-new-buffer name)
+        (insert (eshell-git-get-help command))
+        (Man-fontify-manpage)
+        (Man-mode)
+        (set-buffer-modified-p nil)
+        (pop-to-buffer (current-buffer))
+        ))))
 
 (defun eshell-git-fallback (subcommand args)
   "Just run git with given arguments."

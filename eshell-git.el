@@ -91,17 +91,40 @@
   '("--no-pager")
   "always add this option to git command")
 
+(defcustom eshell-git-command-config
+  '(("man.viewer" . "cat")
+    ("man.cat.cmd" . "man -P cat"))
+  "always add this config option to git command")
+
+(defun eshell-git-convert-config-to-option (config)
+  (apply
+   'append
+   (mapcar
+    (lambda (entry) (list "-c" (concat (car entry) "=" (cdr entry))))
+    config)))
+
+(eval-when-compile
+  (assert
+   (equal
+    (eshell-git-convert-config-to-option '(("aaa" . "bbb") ("ccc" . "ddd")))
+    '("-c" "aaa=bbb" "-c" "ccc=ddd"))))
+
+(defun eshell-git-build-option (args)
+  (append
+   eshell-git-command-option
+   (eshell-git-convert-config-to-option eshell-git-command-config)
+   (mapcar 'eshell-git-to-string args)))
+
 (defconst eshell-git-process-file-function 'process-file)
 
 (defun eshell-git-invoke-command (args)
   "Run git command with args."
-  (let ((string-args (mapcar 'eshell-git-to-string args)))
-    (with-output-to-string
-      (with-current-buffer
-          standard-output
-        (apply
-         (apply-partially eshell-git-process-file-function "git" nil t nil)
-         (append eshell-git-command-option string-args))))))
+  (with-output-to-string
+    (with-current-buffer
+        standard-output
+      (apply
+       (apply-partially eshell-git-process-file-function "git" nil t nil)
+       (eshell-git-build-option args)))))
 
 (eval-when-compile
   (let ((eshell-git-process-file-function
@@ -112,7 +135,7 @@
            (assert (not display))
            (assert (equal
                     args
-                    (append eshell-git-command-option '("-n" "1"))))
+                    (eshell-git-build-option '("-n" "1"))))
            (insert "out"))))
     (assert
      (equal

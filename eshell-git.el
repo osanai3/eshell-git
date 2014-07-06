@@ -172,6 +172,13 @@
 (defun eshell-git-st ()
   (eshell-git-format-st (eshell-git-get-status)))
 
+(defcustom eshell-git-ci-delegate nil "used by eshell-git-ci")
+
+(defun eshell-git-ci (&rest args)
+  (if eshell-git-ci-delegate
+      (funcall eshell-git-ci-delegate)
+    (eshell-git-fallback "commit" args)))
+
 (defun eshell-git-fallback (subcommand args)
   "Just run git with given arguments."
   (eshell-git-invoke-command (cons subcommand args))

@@ -141,15 +141,12 @@
 
 ;;; user interface function
 
-(defcustom subcommand-list
-  '("st")
-  "available subcommand list" :group 'eshell-git)
-
 (defun eshell-git (subcommand &rest args)
   "Main function to be invoked from eshell."
-  (if (member subcommand subcommand-list)
-      (apply (intern (concat "eshell-git-" subcommand)) args)
-    (eshell-git-fallback subcommand args)))
+  (let ((funname (intern (concat "eshell-git-" subcommand))))
+  (if (fboundp funname)
+      (apply funname args)
+    (eshell-git-fallback subcommand args))))
 
 (defun eshell-git-propertize-st (status)
   (if (equal status "??")

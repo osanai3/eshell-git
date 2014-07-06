@@ -103,12 +103,22 @@
 
 ;;; git accessor function
 
-(defun eshell-git-get-status ()
-  "Get git status and parse it."
+(defun eshell-git-parse-status (string)
   (mapcar
    (lambda (line) (cons (substring line 3) (substring line 0 2)))
-   (eshell-git-lines
-    (eshell-git-invoke-command '("status" "--porcelain")))))
+   (eshell-git-lines string)))
+
+(eval-when-compile
+  (assert
+   (equal
+    (eshell-git-parse-status "MM aaa.el\nA  bbb.el")
+    '(("aaa.el" . "MM") ("bbb.el" . "A "))
+    )))
+
+(defun eshell-git-get-status ()
+  "Get git status and parse it."
+  (eshell-git-parse-status
+    (eshell-git-invoke-command '("status" "--porcelain"))))
 
 ;;; user interface function
 

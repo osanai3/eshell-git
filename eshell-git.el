@@ -26,7 +26,26 @@
 
 (require 'cl-lib)
 
-(defgroup eshell-git nil "Git frontend for eshell." :group 'convenience)
+(defgroup eshell-git nil
+  "Git frontend for eshell."
+  :group 'convenience)
+
+;; faces
+
+(defgroup eshell-git-faces nil
+  "Faces used by eshell-git."
+  :group 'eshell-git
+  :group 'faces)
+
+(defface eshell-git-staged
+  '((t :inherit diff-added))
+    "Face for staged status."
+    :group 'eshell-git-faces)
+
+(defface eshell-git-not-staged
+  '((t :inherit diff-removed))
+    "Face for not staged status."
+    :group 'eshell-git-faces)
 
 ;;; utility function
 
@@ -132,10 +151,18 @@
       (apply (intern (concat "eshell-git-" subcommand)) args)
     (eshell-git-fallback subcommand args)))
 
+(defun eshell-git-propertize-st (status)
+  (if (equal status "??")
+      status
+    (concat
+     (propertize (substring status 0 1) 'face 'eshell-git-staged)
+     (propertize (substring status 1 2) 'face 'eshell-git-not-staged))))
+
 (defun eshell-git-format-st (status-alist)
   (eshell-git-unlines
    (mapcar
-    (lambda (status) (concat (cdr status) " " (car status)))
+    (lambda (status)
+      (concat (eshell-git-propertize-st (cdr status)) " " (car status)))
     status-alist)))
 
 (eval-when-compile

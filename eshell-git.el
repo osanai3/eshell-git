@@ -169,8 +169,7 @@
 
 (defun eshell-git-get-help (command)
   "Get git help"
-  (eshell-git-invoke-command (list "help" command))
-)
+  (eshell-git-invoke-command (list "help" command)))
 
 ;;; user interface function
 
@@ -224,6 +223,17 @@
         (set-buffer-modified-p nil)
         (pop-to-buffer (current-buffer))
         ))))
+
+(defun eshell-git-diff (&rest args)
+  (with-current-buffer
+      (let* ((name "*eshell-git diff*")
+             (buffer (get-buffer name)))
+        (if buffer buffer (generate-new-buffer name)))
+    (erase-buffer)
+    (insert (eshell-git-invoke-command (cons "diff" args)))
+    (diff-mode)
+    (set-buffer-modified-p nil)
+    (pop-to-buffer (current-buffer))))
 
 (defun eshell-git-fallback (subcommand args)
   "Just run git with given arguments."

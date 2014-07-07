@@ -198,14 +198,20 @@
     )))
 
 (defun eshell-git-st ()
+  (eshell-git-status))
+
+(defun eshell-git-status ()
   (eshell-git-format-st (eshell-git-get-status)))
 
 (defcustom eshell-git-ci-delegate nil "used by eshell-git-ci")
 
-(defun eshell-git-ci (&rest args)
+(defun eshell-git-commit (&rest args)
   (if eshell-git-ci-delegate
       (funcall eshell-git-ci-delegate)
     (eshell-git-fallback "commit" args)))
+
+(defun eshell-git-ci (&rest args)
+  (apply 'eshell-git-commit args))
 
 (defun eshell-git-help (command)
   (let* ((name (format "*eshell-git help %s*" command))
@@ -230,6 +236,12 @@
     (diff-mode)
     (set-buffer-modified-p nil)
     (pop-to-buffer (current-buffer))))
+
+(defun eshell-git-di (&rest args)
+  (apply 'eshell-git-diff args))
+
+(defun eshell-git-dc (&rest args)
+  (apply 'eshell-git-di (cons "--cached" args)))
 
 (defun eshell-git-fallback (subcommand args)
   "Just run git with given arguments."

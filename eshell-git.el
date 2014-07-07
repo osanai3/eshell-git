@@ -255,4 +255,6 @@
   (eshell-git-invoke-command (cons subcommand args))
   )
 
+(provide 'eshell-git)
+
 ;;; eshell-git.el ends here

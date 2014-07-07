@@ -23,8 +23,8 @@
 ;; * Use synchronous process for fast response in remote host.
 
 ;;; TO DO
-;; * git log
 ;; * remove delegation from git ci
+;; * remove delegation from git log
 ;; * alias system
 
 ;;; Code:
@@ -242,6 +242,13 @@
 
 (defun eshell-git-dc (&rest args)
   (apply 'eshell-git-di (cons "--cached" args)))
+
+(defcustom eshell-git-log-delegate nil "used by eshell-git-log")
+
+(defun eshell-git-log (&rest args)
+  (if eshell-git-log-delegate
+      (funcall eshell-git-log-delegate)
+    (eshell-git-fallback "log" args)))
 
 (defun eshell-git-fallback (subcommand args)
   "Just run git with given arguments."

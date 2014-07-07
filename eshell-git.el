@@ -19,10 +19,11 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
+
 ;; This program is git frontend for eshell.
 ;; * Use synchronous process for fast response in remote host.
 
-;;; TO DO
+;; TO DO
 ;; * remove delegation from git ci
 ;; * remove delegation from git log
 ;; * alias system
@@ -30,6 +31,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'man)
 
 (defgroup eshell-git nil
   "Git frontend for eshell."

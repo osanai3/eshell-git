@@ -23,9 +23,9 @@
 ;; * Use synchronous process for fast response in remote host.
 
 ;;; TO DO
-;; * git diff
 ;; * git log
 ;; * remove delegation from git ci
+;; * alias system
 
 ;;; Code:
 

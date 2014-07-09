@@ -25,7 +25,6 @@
 ;; * Use emacs buffer instead of git pager.
 
 ;; TO DO
-;; * remove delegation from git ci
 ;; * remove delegation from git log
 ;; * alias system
 
@@ -230,8 +229,20 @@
       (erase-buffer)
       (funcall callback)
       (set-buffer-modified-p nil))
-    (current-buffer)
-  ))
+    (current-buffer)))
+
+(eval-when-compile
+  (let ((buffer (eshell-git-get-buffer "test" (lambda () (insert "test")))))
+    (assert
+     (equal
+      (with-current-buffer buffer (buffer-string))
+      "test"))
+    (assert
+     (equal
+      (buffer-name buffer)
+      "*eshell-git test*"))
+    (assert
+     (not (buffer-modified-p buffer)))))
 
 (defun eshell-git-commit ()
   (pop-to-buffer

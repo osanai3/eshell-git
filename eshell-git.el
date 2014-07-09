@@ -21,7 +21,8 @@
 ;;; Commentary:
 
 ;; This program is git frontend for eshell.
-;; * Use synchronous process for fast response in remote host.
+;; * Use synchronous process for fast response in remote host via tramp.
+;; * Use emacs buffer instead of git pager.
 
 ;; TO DO
 ;; * remove delegation from git ci
@@ -100,7 +101,8 @@
 
 (defcustom eshell-git-command-config
   '(("man.viewer" . "cat")
-    ("man.cat.cmd" . "man -P cat"))
+    ("man.cat.cmd" . "man -P cat")
+    ("core.editor" . "false"))
   "always add this config option to git command")
 
 (defun eshell-git-convert-config-to-option (config)
@@ -169,6 +171,20 @@
   (eshell-git-parse-status
     (eshell-git-invoke-command '("status" "--porcelain"))))
 
+(defun eshell-git-do-commit (commit-message)
+  "Do git commit"
+  (eshell-git-invoke-command (list "commit" "-m" commit-message)))
+
+;;; mode
+
+(define-derived-mode eshell-git-commit-mode text-mode "Eshell-Git-Commit"
+  "commit mode used by eshell-git"
+  (defun eshell-git-do-commit-from-buffer ()
+    (interactive)
+    (message (eshell-git-do-commit (buffer-string)))
+    (kill-buffer))
+  (define-key eshell-git-commit-mode-map (kbd "C-c C-c") 'eshell-git-do-commit-from-buffer))
+
 ;;; user interface function
 
 (defun eshell-git (subcommand &rest args)
@@ -205,12 +221,15 @@
 (defun eshell-git-status ()
   (eshell-git-format-st (eshell-git-get-status)))
 
-(defcustom eshell-git-ci-delegate nil "used by eshell-git-ci")
-
-(defun eshell-git-commit (&rest args)
-  (if eshell-git-ci-delegate
-      (funcall eshell-git-ci-delegate)
-    (eshell-git-fallback "commit" args)))
+(defun eshell-git-commit ()
+  (with-current-buffer
+      (let* ((name "*eshell-git commit*")
+             (buffer (get-buffer name)))
+        (if buffer buffer (generate-new-buffer name)))
+    (erase-buffer)
+    (eshell-git-commit-mode)
+    (set-buffer-modified-p nil)
+    (pop-to-buffer (current-buffer))))
 
 (defun eshell-git-ci (&rest args)
   (apply 'eshell-git-commit args))

@@ -221,42 +221,45 @@
 (defun eshell-git-status ()
   (eshell-git-format-st (eshell-git-get-status)))
 
-(defun eshell-git-commit ()
+(defun eshell-git-get-buffer (name callback)
   (with-current-buffer
-      (let* ((name "*eshell-git commit*")
+      (let* ((name (format "*eshell-git %s*" name))
              (buffer (get-buffer name)))
         (if buffer buffer (generate-new-buffer name)))
-    (erase-buffer)
-    (eshell-git-commit-mode)
-    (set-buffer-modified-p nil)
-    (pop-to-buffer (current-buffer))))
+    (let ((inhibit-read-only t))
+      (erase-buffer)
+      (funcall callback)
+      (set-buffer-modified-p nil))
+    (current-buffer)
+  ))
+
+(defun eshell-git-commit ()
+  (pop-to-buffer
+   (eshell-git-get-buffer
+    "commit"
+    (lambda ()
+      (eshell-git-commit-mode)))))
 
 (defun eshell-git-ci (&rest args)
   (apply 'eshell-git-commit args))
 
 (defun eshell-git-help (command)
-  (let* ((name (format "*eshell-git help %s*" command))
-         (buffer (get-buffer name)))
-    (pop-to-buffer
-     (if buffer buffer
-       (with-current-buffer
-           (generate-new-buffer name)
-         (insert (eshell-git-invoke-command (list "help" command)))
-         (Man-fontify-manpage)
-         (Man-mode)
-         (set-buffer-modified-p nil)
-         (current-buffer))))))
+  (pop-to-buffer
+   (eshell-git-get-buffer
+    (format "help %s" command)
+    (lambda ()
+      (insert (eshell-git-invoke-command (list "help" command)))
+      (Man-fontify-manpage)
+      (Man-mode)
+      ))))
 
 (defun eshell-git-diff (&rest args)
-  (with-current-buffer
-      (let* ((name "*eshell-git diff*")
-             (buffer (get-buffer name)))
-        (if buffer buffer (generate-new-buffer name)))
-    (erase-buffer)
-    (insert (eshell-git-invoke-command (cons "diff" args)))
-    (diff-mode)
-    (set-buffer-modified-p nil)
-    (pop-to-buffer (current-buffer))))
+  (pop-to-buffer
+   (eshell-git-get-buffer
+    "diff"
+    (lambda ()
+      (insert (eshell-git-invoke-command (cons "diff" args)))
+      (diff-mode)))))
 
 (defun eshell-git-di (&rest args)
   (apply 'eshell-git-diff args))

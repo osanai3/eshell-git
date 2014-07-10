@@ -25,8 +25,8 @@
 ;; * Use emacs buffer instead of git pager.
 
 ;; TO DO
-;; * remove delegation from git log
 ;; * alias system
+;; * add default commit message
 
 ;;; Code:
 
@@ -171,8 +171,33 @@
     (eshell-git-invoke-command '("status" "--porcelain"))))
 
 (defun eshell-git-do-commit (commit-message)
-  "Do git commit"
+  "Do git commit."
   (eshell-git-invoke-command (list "commit" "-m" commit-message)))
+
+(defconst eshell-git-log-format-param "%h%n%an%n%ar%n%s")
+
+(defun eshell-git-parse-log (string)
+  (eshell-git-parse-log-lines (eshell-git-lines string)))
+
+(defun eshell-git-parse-log-lines (lines)
+  (when lines
+    (cl-destructuring-bind
+        (hash author-name author-date subject &rest rest) lines
+      (cons
+       (list
+        (cons 'hash hash)
+        (cons 'author-name author-name)
+        (cons 'author-date author-date)
+        (cons 'subject subject))
+       (eshell-git-parse-log-lines rest)))))
+
+(defun eshell-git-get-log (&rest args)
+  "Get git log and parse it."
+  (let ((format-argument
+         (format "--format=format:%s" eshell-git-log-format-param)))
+    (eshell-git-parse-log
+     (eshell-git-invoke-command
+      (cons "log" (cons format-argument args))))))
 
 ;;; mode
 
@@ -278,17 +303,23 @@
 (defun eshell-git-dc (&rest args)
   (apply 'eshell-git-di (cons "--cached" args)))
 
-(defcustom eshell-git-log-delegate nil "used by eshell-git-log")
+(defun eshell-git-format-log (log-list)
+  (eshell-git-unlines
+   (mapcar
+    (lambda (log)
+      (concat
+       (cdr (assoc 'hash log))
+       "\t"
+       (cdr (assoc 'subject log))))
+    log-list)))
 
 (defun eshell-git-log (&rest args)
-  (if eshell-git-log-delegate
-      (funcall eshell-git-log-delegate)
-    (eshell-git-fallback "log" args)))
+  (eshell-git-format-log
+   (apply 'eshell-git-get-log args)))
 
 (defun eshell-git-fallback (subcommand args)
   "Just run git with given arguments."
-  (eshell-git-invoke-command (cons subcommand args))
-  )
+  (eshell-git-invoke-command (cons subcommand args)))
 
 (provide 'eshell-git)
 

@@ -25,7 +25,6 @@
 ;; * Use emacs buffer instead of git pager.
 
 ;; TO DO
-;; * alias system
 ;; * add default commit message
 ;; * show detail of each commit in log buffer
 ;; * gradual get git log
@@ -213,12 +212,31 @@
 
 ;;; user interface function
 
+(defcustom eshell-git-alias-list
+  '(("st" . "status")
+    ("ci" . "commit")
+    ("di" . "diff")
+    ("co" . "checkout"))
+  "available alias")
+
 (defun eshell-git (subcommand &rest args)
   "Main function to be invoked from eshell."
+  (let ((alias (cdr (assoc subcommand eshell-git-alias-list))))
+    (if alias
+        (cond
+         ((stringp alias)
+          (apply 'eshell-git-without-alias (cons alias args)))
+         ((functionp alias)
+          (apply alias args))
+         ((and (listp alias) (consp alias))
+          (apply 'eshell-git-without-alias (append alias args))))
+      (apply 'eshell-git-without-alias (cons subcommand args)))))
+
+(defun eshell-git-without-alias (subcommand &rest args)
   (let ((funname (intern (concat "eshell-git-" subcommand))))
-  (if (fboundp funname)
-      (apply funname args)
-    (eshell-git-fallback subcommand args))))
+    (if (fboundp funname)
+        (apply funname args)
+      (eshell-git-fallback subcommand args))))
 
 (defun eshell-git-propertize-st (status)
   (if (equal status "??")
@@ -240,9 +258,6 @@
     (eshell-git-format-st '(("aaa.el" . "MM") ("bbb.el" . "A ")))
     "MM aaa.el\nA  bbb.el"
     )))
-
-(defun eshell-git-st ()
-  (eshell-git-status))
 
 (defun eshell-git-status ()
   (eshell-git-format-st (eshell-git-get-status)))
@@ -282,9 +297,6 @@
     (lambda ()
       (eshell-git-commit-mode)))))
 
-(defun eshell-git-ci (&rest args)
-  (apply 'eshell-git-commit args))
-
 (defun eshell-git-help (command)
   (eshell-git-pop-to-buffer
    (eshell-git-get-buffer
@@ -302,12 +314,6 @@
     (lambda ()
       (insert (eshell-git-invoke-command (cons "diff" args)))
       (diff-mode)))))
-
-(defun eshell-git-di (&rest args)
-  (apply 'eshell-git-diff args))
-
-(defun eshell-git-dc (&rest args)
-  (apply 'eshell-git-di (cons "--cached" args)))
 
 (defun eshell-git-format-log (log-list)
   (eshell-git-unlines

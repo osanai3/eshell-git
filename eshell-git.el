@@ -27,6 +27,8 @@
 ;; TO DO
 ;; * alias system
 ;; * add default commit message
+;; * show detail of each commit in log buffer
+;; * gradual get git log
 
 ;;; Code:
 
@@ -269,8 +271,12 @@
     (assert
      (not (buffer-modified-p buffer)))))
 
+(defun eshell-git-pop-to-buffer (buffer)
+  (pop-to-buffer buffer)
+  (goto-char (point-min)))
+
 (defun eshell-git-commit ()
-  (pop-to-buffer
+  (eshell-git-pop-to-buffer
    (eshell-git-get-buffer
     "commit"
     (lambda ()
@@ -280,7 +286,7 @@
   (apply 'eshell-git-commit args))
 
 (defun eshell-git-help (command)
-  (pop-to-buffer
+  (eshell-git-pop-to-buffer
    (eshell-git-get-buffer
     (format "help %s" command)
     (lambda ()
@@ -290,7 +296,7 @@
       ))))
 
 (defun eshell-git-diff (&rest args)
-  (pop-to-buffer
+  (eshell-git-pop-to-buffer
    (eshell-git-get-buffer
     "diff"
     (lambda ()
@@ -314,8 +320,13 @@
     log-list)))
 
 (defun eshell-git-log (&rest args)
-  (eshell-git-format-log
-   (apply 'eshell-git-get-log args)))
+  (eshell-git-pop-to-buffer
+   (eshell-git-get-buffer
+    "log"
+    (lambda ()
+      (insert
+       (eshell-git-format-log
+        (apply 'eshell-git-get-log args)))))))
 
 (defun eshell-git-fallback (subcommand args)
   "Just run git with given arguments."

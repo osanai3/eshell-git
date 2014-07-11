@@ -228,8 +228,9 @@
           (apply 'eshell-git-without-alias (cons alias args)))
          ((functionp alias)
           (apply alias args))
-         ((and (listp alias) (consp alias))
-          (apply 'eshell-git-without-alias (append alias args))))
+         ((and (listp alias))
+          (apply 'eshell-git-without-alias (append alias args)))
+         (t (error "invalid alias definition : %S" alias)))
       (apply 'eshell-git-without-alias (cons subcommand args)))))
 
 (defun eshell-git-without-alias (subcommand &rest args)
@@ -288,7 +289,8 @@
 
 (defun eshell-git-pop-to-buffer (buffer)
   (pop-to-buffer buffer)
-  (goto-char (point-min)))
+  (goto-char (point-min))
+  buffer)
 
 (defun eshell-git-commit ()
   (eshell-git-pop-to-buffer
@@ -337,6 +339,9 @@
 (defun eshell-git-fallback (subcommand args)
   "Just run git with given arguments."
   (eshell-git-invoke-command (cons subcommand args)))
+
+(defun eshell-git-start ()
+  (fset 'eshell/git (symbol-function 'eshell-git)))
 
 (provide 'eshell-git)
 

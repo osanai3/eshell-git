@@ -26,9 +26,9 @@
 ;; * Use emacs buffer instead of git pager.
 
 ;; TO DO
-;; * add default commit message
 ;; * show detail of each commit in log buffer
 ;; * gradual get git log
+;; * add option to git command
 
 ;;; Code:
 
@@ -76,6 +76,31 @@
     (eshell-git-unlines '("aaa" "bbb"))
     "aaa\nbbb")))
 
+(defun eshell-git-comment-string (string)
+  (eshell-git-unlines
+   (mapcar
+    (lambda (str) (concat "# "str))
+    (eshell-git-lines string))))
+
+(eval-when-compile
+  (assert
+   (equal
+    (eshell-git-comment-string "aaa\nbbb")
+    "# aaa\n# bbb")))
+
+(defun eshell-git-remove-comment-string (string)
+  (eshell-git-unlines
+   (delq
+    nil
+    (mapcar
+     (lambda (str) (if (equal "#" (substring str 0 1)) nil str))
+     (eshell-git-lines string)))))
+
+(eval-when-compile
+  (assert
+   (equal
+    (eshell-git-remove-comment-string "aaa\n# bbb")
+    "aaa")))
 
 (defun eshell-git-to-string (value)
   (cond ((stringp value) value)
@@ -207,7 +232,8 @@
   "commit mode used by eshell-git"
   (defun eshell-git-do-commit-from-buffer ()
     (interactive)
-    (message (eshell-git-do-commit (buffer-string)))
+    (message
+     (eshell-git-do-commit (eshell-git-remove-comment-string (buffer-string))))
     (kill-buffer))
   (define-key eshell-git-commit-mode-map (kbd "C-c C-c") 'eshell-git-do-commit-from-buffer))
 
@@ -293,12 +319,19 @@
   (goto-char (point-min))
   buffer)
 
+(defun eshell-git-default-commit-message ()
+  (concat
+   "\n\n"
+   (eshell-git-comment-string
+    (eshell-git-invoke-command '("diff" "--cached" "--stat")))))
+
 (defun eshell-git-commit ()
   (eshell-git-pop-to-buffer
    (eshell-git-get-buffer
     "commit"
     (lambda ()
-      (eshell-git-commit-mode)))))
+      (eshell-git-commit-mode)
+      (insert (eshell-git-default-commit-message))))))
 
 (defun eshell-git-help (command)
   (eshell-git-pop-to-buffer

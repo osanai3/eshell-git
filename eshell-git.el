@@ -22,6 +22,7 @@
 
 ;; This program is git frontend for eshell.
 ;; * Use synchronous process for fast response in remote host via tramp.
+;;     * You cannot input ssh passphrase interactively. Use ssh-agent forwarding if necessary.
 ;; * Use emacs buffer instead of git pager.
 
 ;; TO DO

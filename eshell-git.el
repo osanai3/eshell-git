@@ -29,6 +29,7 @@
 ;; * show detail of each commit in log buffer
 ;; * gradual get git log
 ;; * add option to git command
+;; * refactoring : file separation
 
 ;;; Code:
 
@@ -291,15 +292,17 @@
   (eshell-git-format-st (eshell-git-get-status)))
 
 (defun eshell-git-get-buffer (name callback)
-  (with-current-buffer
-      (let* ((name (format "*eshell-git %s*" name))
-             (buffer (get-buffer name)))
-        (if buffer buffer (generate-new-buffer name)))
-    (let ((inhibit-read-only t))
-      (erase-buffer)
-      (funcall callback)
-      (set-buffer-modified-p nil))
-    (current-buffer)))
+  (let ((original-default-directory default-directory))
+    (with-current-buffer
+        (let* ((name (format "*eshell-git %s*" name))
+               (buffer (get-buffer name)))
+          (if buffer buffer (generate-new-buffer name)))
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (setq default-directory original-default-directory)
+        (funcall callback)
+        (set-buffer-modified-p nil))
+      (current-buffer))))
 
 (eval-when-compile
   (let ((buffer (eshell-git-get-buffer "test" (lambda () (insert "test")))))

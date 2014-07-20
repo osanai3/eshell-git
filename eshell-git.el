@@ -62,7 +62,7 @@
 (defun eshell-git-lines (string)
   (split-string string "\n" t))
 
-(assert
+(cl-assert
  (equal
   (eshell-git-lines "aaa\nbbb\n")
   '("aaa" "bbb")))
@@ -70,7 +70,7 @@
 (defun eshell-git-unlines (strings)
   (mapconcat 'identity strings "\n"))
 
-(assert
+(cl-assert
  (equal
   (eshell-git-unlines '("aaa" "bbb"))
   "aaa\nbbb"))
@@ -81,7 +81,7 @@
     (lambda (str) (concat "# "str))
     (eshell-git-lines string))))
 
-(assert
+(cl-assert
  (equal
   (eshell-git-comment-string "aaa\nbbb")
   "# aaa\n# bbb"))
@@ -94,7 +94,7 @@
      (lambda (str) (if (equal "#" (substring str 0 1)) nil str))
      (eshell-git-lines string)))))
 
-(assert
+(cl-assert
  (equal
   (eshell-git-remove-comment-string "aaa\n# bbb")
   "aaa"))
@@ -105,11 +105,11 @@
         (t (error "eshell-git-to-string : Cannot convert to string %S" value))
    ))
 
-(assert
+(cl-assert
  (equal
   (eshell-git-to-string "aaa")
   "aaa"))
-(assert
+(cl-assert
  (equal
   (eshell-git-to-string 1)
   "1"))
@@ -133,7 +133,7 @@
     (lambda (entry) (list "-c" (concat (car entry) "=" (cdr entry))))
     config)))
 
-(assert
+(cl-assert
  (equal
   (eshell-git-convert-config-to-option '(("aaa" . "bbb") ("ccc" . "ddd")))
   '("-c" "aaa=bbb" "-c" "ccc=ddd")))
@@ -157,15 +157,15 @@
 
 (let ((eshell-git-process-file-function
        (lambda (command infile buffer display &rest args)
-         (assert (equal command "git"))
-         (assert (not infile))
-         (assert buffer)
-         (assert (not display))
-         (assert (equal
+         (cl-assert (equal command "git"))
+         (cl-assert (not infile))
+         (cl-assert buffer)
+         (cl-assert (not display))
+         (cl-assert (equal
                   args
                   (eshell-git-build-option '("-n" "1"))))
          (insert "out"))))
-  (assert
+  (cl-assert
    (equal
     (eshell-git-invoke-command '("-n" 1))
     "out")))
@@ -177,7 +177,7 @@
    (lambda (line) (cons (substring line 3) (substring line 0 2)))
    (eshell-git-lines string)))
 
-(assert
+(cl-assert
  (equal
   (eshell-git-parse-status "MM aaa.el\nA  bbb.el")
   '(("aaa.el" . "MM") ("bbb.el" . "A "))))
@@ -270,7 +270,7 @@
       (concat (eshell-git-propertize-st (cdr status)) " " (car status)))
     status-alist)))
 
-(assert
+(cl-assert
  (equal
   (eshell-git-format-st '(("aaa.el" . "MM") ("bbb.el" . "A ")))
   "MM aaa.el\nA  bbb.el"))
@@ -292,15 +292,15 @@
       (current-buffer))))
 
 (let ((buffer (eshell-git-get-buffer "test" (lambda () (insert "test")))))
-  (assert
+  (cl-assert
    (equal
     (with-current-buffer buffer (buffer-string))
     "test"))
-  (assert
+  (cl-assert
    (equal
     (buffer-name buffer)
     "*eshell-git test*"))
-  (assert
+  (cl-assert
    (not (buffer-modified-p buffer))))
 
 (defun eshell-git-pop-to-buffer (buffer)

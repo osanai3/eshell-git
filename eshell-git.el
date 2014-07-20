@@ -62,20 +62,18 @@
 (defun eshell-git-lines (string)
   (split-string string "\n" t))
 
-(eval-when-compile
-  (assert
-   (equal
-    (eshell-git-lines "aaa\nbbb\n")
-    '("aaa" "bbb"))))
+(assert
+ (equal
+  (eshell-git-lines "aaa\nbbb\n")
+  '("aaa" "bbb")))
 
 (defun eshell-git-unlines (strings)
   (mapconcat 'identity strings "\n"))
 
-(eval-when-compile
-  (assert
-   (equal
-    (eshell-git-unlines '("aaa" "bbb"))
-    "aaa\nbbb")))
+(assert
+ (equal
+  (eshell-git-unlines '("aaa" "bbb"))
+  "aaa\nbbb"))
 
 (defun eshell-git-comment-string (string)
   (eshell-git-unlines
@@ -83,11 +81,10 @@
     (lambda (str) (concat "# "str))
     (eshell-git-lines string))))
 
-(eval-when-compile
-  (assert
-   (equal
-    (eshell-git-comment-string "aaa\nbbb")
-    "# aaa\n# bbb")))
+(assert
+ (equal
+  (eshell-git-comment-string "aaa\nbbb")
+  "# aaa\n# bbb"))
 
 (defun eshell-git-remove-comment-string (string)
   (eshell-git-unlines
@@ -97,11 +94,10 @@
      (lambda (str) (if (equal "#" (substring str 0 1)) nil str))
      (eshell-git-lines string)))))
 
-(eval-when-compile
-  (assert
-   (equal
-    (eshell-git-remove-comment-string "aaa\n# bbb")
-    "aaa")))
+(assert
+ (equal
+  (eshell-git-remove-comment-string "aaa\n# bbb")
+  "aaa"))
 
 (defun eshell-git-to-string (value)
   (cond ((stringp value) value)
@@ -109,16 +105,14 @@
         (t (error "eshell-git-to-string : Cannot convert to string %S" value))
    ))
 
-(eval-when-compile
-  (assert
-   (equal
-    (eshell-git-to-string "aaa")
-    "aaa"))
-  (assert
-   (equal
-    (eshell-git-to-string 1)
-    "1"))
-  )
+(assert
+ (equal
+  (eshell-git-to-string "aaa")
+  "aaa"))
+(assert
+ (equal
+  (eshell-git-to-string 1)
+  "1"))
 
 ;;; command invoke function
 
@@ -139,11 +133,10 @@
     (lambda (entry) (list "-c" (concat (car entry) "=" (cdr entry))))
     config)))
 
-(eval-when-compile
-  (assert
-   (equal
-    (eshell-git-convert-config-to-option '(("aaa" . "bbb") ("ccc" . "ddd")))
-    '("-c" "aaa=bbb" "-c" "ccc=ddd"))))
+(assert
+ (equal
+  (eshell-git-convert-config-to-option '(("aaa" . "bbb") ("ccc" . "ddd")))
+  '("-c" "aaa=bbb" "-c" "ccc=ddd")))
 
 (defun eshell-git-build-option (args)
   (append
@@ -162,22 +155,20 @@
        (apply-partially eshell-git-process-file-function "git" nil t nil)
        (eshell-git-build-option args)))))
 
-(eval-when-compile
-  (let ((eshell-git-process-file-function
-         (lambda (command infile buffer display &rest args)
-           (assert (equal command "git"))
-           (assert (not infile))
-           (assert buffer)
-           (assert (not display))
-           (assert (equal
-                    args
-                    (eshell-git-build-option '("-n" "1"))))
-           (insert "out"))))
-    (assert
-     (equal
-      (eshell-git-invoke-command '("-n" 1))
-      "out"
-      ))))
+(let ((eshell-git-process-file-function
+       (lambda (command infile buffer display &rest args)
+         (assert (equal command "git"))
+         (assert (not infile))
+         (assert buffer)
+         (assert (not display))
+         (assert (equal
+                  args
+                  (eshell-git-build-option '("-n" "1"))))
+         (insert "out"))))
+  (assert
+   (equal
+    (eshell-git-invoke-command '("-n" 1))
+    "out")))
 
 ;;; git accessor function
 
@@ -186,12 +177,10 @@
    (lambda (line) (cons (substring line 3) (substring line 0 2)))
    (eshell-git-lines string)))
 
-(eval-when-compile
-  (assert
-   (equal
-    (eshell-git-parse-status "MM aaa.el\nA  bbb.el")
-    '(("aaa.el" . "MM") ("bbb.el" . "A "))
-    )))
+(assert
+ (equal
+  (eshell-git-parse-status "MM aaa.el\nA  bbb.el")
+  '(("aaa.el" . "MM") ("bbb.el" . "A "))))
 
 (defun eshell-git-get-status ()
   "Get git status and parse it."
@@ -281,12 +270,10 @@
       (concat (eshell-git-propertize-st (cdr status)) " " (car status)))
     status-alist)))
 
-(eval-when-compile
-  (assert
-   (equal
-    (eshell-git-format-st '(("aaa.el" . "MM") ("bbb.el" . "A ")))
-    "MM aaa.el\nA  bbb.el"
-    )))
+(assert
+ (equal
+  (eshell-git-format-st '(("aaa.el" . "MM") ("bbb.el" . "A ")))
+  "MM aaa.el\nA  bbb.el"))
 
 (defun eshell-git-status ()
   (eshell-git-format-st (eshell-git-get-status)))
@@ -304,18 +291,17 @@
         (set-buffer-modified-p nil))
       (current-buffer))))
 
-(eval-when-compile
-  (let ((buffer (eshell-git-get-buffer "test" (lambda () (insert "test")))))
-    (assert
-     (equal
-      (with-current-buffer buffer (buffer-string))
-      "test"))
-    (assert
-     (equal
-      (buffer-name buffer)
-      "*eshell-git test*"))
-    (assert
-     (not (buffer-modified-p buffer)))))
+(let ((buffer (eshell-git-get-buffer "test" (lambda () (insert "test")))))
+  (assert
+   (equal
+    (with-current-buffer buffer (buffer-string))
+    "test"))
+  (assert
+   (equal
+    (buffer-name buffer)
+    "*eshell-git test*"))
+  (assert
+   (not (buffer-modified-p buffer))))
 
 (defun eshell-git-pop-to-buffer (buffer)
   (pop-to-buffer buffer)

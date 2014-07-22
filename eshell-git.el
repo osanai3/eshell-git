@@ -114,10 +114,11 @@
   (eshell-git-to-string 1)
   "1"))
 
-(define-button-type 'eshell-git-hash
+(define-button-type 'eshell-git-commit
   'action
   (lambda (button)
-    (message (buffer-substring (button-start button) (button-end button)))))
+    (eshell-git-show-commit
+     (buffer-substring (button-start button) (button-end button)))))
 
 (defun eshell-git-button-string (string type)
   (with-output-to-string
@@ -358,7 +359,7 @@
    (mapcar
     (lambda (log)
       (concat
-       (cdr (assoc 'hash log))
+       (eshell-git-button-string (cdr (assoc 'hash log)) 'commit)
        "\t"
        (cdr (assoc 'subject log))))
     log-list)))
@@ -371,6 +372,14 @@
       (insert
        (eshell-git-format-log
         (apply 'eshell-git-get-log args)))))))
+
+(defun eshell-git-show-commit (commit)
+  (eshell-git-pop-to-buffer
+   (eshell-git-get-buffer
+    "show-commit"
+    (lambda ()
+      (insert
+       (eshell-git-invoke-command (list "show" commit)))))))
 
 (defun eshell-git-fallback (subcommand args)
   "Just run git with given arguments."

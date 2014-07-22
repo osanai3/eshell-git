@@ -114,6 +114,19 @@
   (eshell-git-to-string 1)
   "1"))
 
+(define-button-type 'eshell-git-hash
+  'action
+  (lambda (button)
+    (message (buffer-substring (button-start button) (button-end button)))))
+
+(defun eshell-git-button-string (string type)
+  (with-output-to-string
+    (with-current-buffer
+        standard-output
+      (insert-text-button
+       string
+       'type (intern (concat "eshell-git-" (symbol-name type)))))))
+
 ;;; command invoke function
 
 (defcustom eshell-git-command-option

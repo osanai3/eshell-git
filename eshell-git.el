@@ -26,7 +26,7 @@
 ;; * Use emacs buffer instead of git pager.
 
 ;; TO DO
-;; * show detail of each commit in log buffer
+;; * color git show-commit
 ;; * gradual get git log
 ;; * add option to git command
 ;; * refactoring : file separation
@@ -56,6 +56,31 @@
   '((t :inherit diff-removed))
     "Face for not staged status."
     :group 'eshell-git-faces)
+
+(defface eshell-git-diff-header
+  '((t :inherit diff-header))
+  "Face for header line."
+  :group 'eshell-git-faces)
+
+(defface eshell-git-diff-file-header
+  '((t :inherit diff-file-header))
+  "Face for file header line."
+  :group 'eshell-git-faces)
+
+(defface eshell-git-diff-hunk-header
+  '((t :inherit diff-hunk-header))
+  "Face for hunk header line."
+  :group 'eshell-git-faces)
+
+(defface eshell-git-diff-added
+  '((t :inherit diff-added))
+  "Face for added line."
+  :group 'eshell-git-faces)
+
+(defface eshell-git-diff-removed
+  '((t :inherit diff-removed))
+  "Face for removed line."
+  :group 'eshell-git-faces)
 
 ;;; utility function
 
@@ -127,6 +152,18 @@
       (insert-text-button
        string
        'type (intern (concat "eshell-git-" (symbol-name type)))))))
+
+(defun eshell-git-prefixp (prefix string)
+  (equal prefix (substring string 0 (min (length string) (length prefix)))))
+
+(cl-assert
+ (eshell-git-prefixp "aaa" "aaabbb"))
+
+(cl-assert
+ (not (eshell-git-prefixp "aaa" "aabbb")))
+
+(cl-assert
+ (not (eshell-git-prefixp "aaa" "aa")))
 
 ;;; command invoke function
 
@@ -346,13 +383,38 @@
       (Man-mode)
       ))))
 
+(defun eshell-git-propertize-diff (string)
+  (eshell-git-unlines
+   (mapcar
+    (lambda (line)
+      (cond
+       ((or (eshell-git-prefixp "+++ " line)
+            (eshell-git-prefixp "--- " line))
+        (concat
+         (propertize
+          (substring line 0 4)
+          'face 'eshell-git-diff-header)
+         (propertize
+          (substring line 4)
+          'face '(eshell-git-diff-file-header eshell-git-diff-header)))
+       )
+       ((eshell-git-prefixp "@@ " line)
+        (propertize line 'face 'eshell-git-diff-hunk-header))
+       ((eshell-git-prefixp "+" line)
+        (propertize line 'face 'eshell-git-diff-added))
+       ((eshell-git-prefixp "-" line)
+        (propertize line 'face 'eshell-git-diff-removed))
+       (t line)))
+    (eshell-git-lines string))))
+
 (defun eshell-git-diff (&rest args)
   (eshell-git-pop-to-buffer
    (eshell-git-get-buffer
     "diff"
     (lambda ()
-      (insert (eshell-git-invoke-command (cons "diff" args)))
-      (diff-mode)))))
+      (insert
+       (eshell-git-propertize-diff
+        (eshell-git-invoke-command (cons "diff" args))))))))
 
 (defun eshell-git-format-log (log-list)
   (eshell-git-unlines

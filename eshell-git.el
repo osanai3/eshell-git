@@ -332,7 +332,7 @@
   (let ((funname (intern (concat "eshell-git-" subcommand))))
     (if (fboundp funname)
         (apply funname args)
-      (eshell-git-fallback subcommand args))))
+      (apply 'eshell-git-plain (cons subcommand args)))))
 
 (defun eshell-git-propertize-st (status)
   (if (equal status "??")
@@ -444,9 +444,9 @@
       (insert
        (eshell-git-invoke-command (list "show" commit)))))))
 
-(defun eshell-git-fallback (subcommand args)
+(defun eshell-git-plain (&rest args)
   "Just run git with given arguments."
-  (eshell-git-invoke-command (cons subcommand args)))
+  (eshell-git-invoke-command args))
 
 (defun eshell-git-start ()
   (fset 'eshell/git (symbol-function 'eshell-git)))

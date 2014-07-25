@@ -267,6 +267,33 @@
      (eshell-git-invoke-command
       (cons "log" (cons format-argument args))))))
 
+(defun eshell-git-propertize-diff (string)
+  (eshell-git-unlines
+   (mapcar
+    (lambda (line)
+      (cond
+       ((or (eshell-git-prefixp "+++ " line)
+            (eshell-git-prefixp "--- " line))
+        (concat
+         (propertize
+          (substring line 0 4)
+          'face 'eshell-git-diff-header)
+         (propertize
+          (substring line 4)
+          'face '(eshell-git-diff-file-header eshell-git-diff-header))))
+       ((eshell-git-prefixp "@@ " line)
+        (propertize line 'face 'eshell-git-diff-hunk-header))
+       ((eshell-git-prefixp "+" line)
+        (propertize line 'face 'eshell-git-diff-added))
+       ((eshell-git-prefixp "-" line)
+        (propertize line 'face 'eshell-git-diff-removed))
+       (t line)))
+    (eshell-git-lines string))))
+
+(defun eshell-git-get-diff (&rest args)
+  (eshell-git-propertize-diff
+   (eshell-git-invoke-command (cons "diff" args))))
+
 ;;; mode
 
 (define-derived-mode eshell-git-commit-mode text-mode "Eshell-Git-Commit"
@@ -383,38 +410,12 @@
       (Man-mode)
       ))))
 
-(defun eshell-git-propertize-diff (string)
-  (eshell-git-unlines
-   (mapcar
-    (lambda (line)
-      (cond
-       ((or (eshell-git-prefixp "+++ " line)
-            (eshell-git-prefixp "--- " line))
-        (concat
-         (propertize
-          (substring line 0 4)
-          'face 'eshell-git-diff-header)
-         (propertize
-          (substring line 4)
-          'face '(eshell-git-diff-file-header eshell-git-diff-header)))
-       )
-       ((eshell-git-prefixp "@@ " line)
-        (propertize line 'face 'eshell-git-diff-hunk-header))
-       ((eshell-git-prefixp "+" line)
-        (propertize line 'face 'eshell-git-diff-added))
-       ((eshell-git-prefixp "-" line)
-        (propertize line 'face 'eshell-git-diff-removed))
-       (t line)))
-    (eshell-git-lines string))))
-
 (defun eshell-git-diff (&rest args)
   (eshell-git-pop-to-buffer
    (eshell-git-get-buffer
     "diff"
     (lambda ()
-      (insert
-       (eshell-git-propertize-diff
-        (eshell-git-invoke-command (cons "diff" args))))))))
+      (insert (apply 'eshell-git-get-diff args))))))
 
 (defun eshell-git-format-log (log-list)
   (eshell-git-unlines

@@ -27,6 +27,7 @@
 
 ;; TO DO
 ;; * color git show-commit
+;; * add git command config only if it is undefined in .gitconfig
 ;; * gradual get git log
 ;; * add option to git command
 ;; * refactoring : file separation
@@ -84,21 +85,49 @@
 
 ;;; utility function
 
+(defun eshell-git-prefixp (prefix string)
+  (equal prefix (substring string 0 (min (length string) (length prefix)))))
+
+(defun eshell-git-suffixp (suffix string)
+  (equal suffix (substring string (- (min (length string) (length suffix))))))
+
+(cl-assert
+ (eshell-git-prefixp "aaa" "aaabbb"))
+
+(cl-assert
+ (not (eshell-git-prefixp "aaa" "aabbb")))
+
+(cl-assert
+ (not (eshell-git-prefixp "aaa" "aa")))
+
+(cl-assert
+ (eshell-git-suffixp "bbb" "aaabbb"))
+
+(cl-assert
+ (not (eshell-git-suffixp "bbb" "aaabb")))
+
+(cl-assert
+ (not (eshell-git-suffixp "aaa" "aa")))
+
 (defun eshell-git-lines (string)
-  (split-string string "\n" t))
+  (let ((str
+         (if (eshell-git-suffixp "\n" string)
+             (substring string 0 (- (length string) 1))
+           string)))
+    (split-string str "\n")))
 
 (cl-assert
  (equal
-  (eshell-git-lines "aaa\nbbb\n")
-  '("aaa" "bbb")))
+  (eshell-git-lines "aaa\nbbb\n\nccc\n\n")
+  '("aaa" "bbb" "" "ccc" "")))
 
 (defun eshell-git-unlines (strings)
-  (mapconcat 'identity strings "\n"))
+  (mapconcat (lambda (line) (concat line "\n")) strings ""))
 
 (cl-assert
  (equal
   (eshell-git-unlines '("aaa" "bbb"))
-  "aaa\nbbb"))
+  "aaa\nbbb\n"))
 
 (defun eshell-git-comment-string (string)
   (eshell-git-unlines
@@ -109,20 +138,20 @@
 (cl-assert
  (equal
   (eshell-git-comment-string "aaa\nbbb")
-  "# aaa\n# bbb"))
+  "# aaa\n# bbb\n"))
 
 (defun eshell-git-remove-comment-string (string)
   (eshell-git-unlines
    (delq
     nil
     (mapcar
-     (lambda (str) (if (equal "#" (substring str 0 1)) nil str))
+     (lambda (str) (if (eshell-git-prefixp "#" str) nil str))
      (eshell-git-lines string)))))
 
 (cl-assert
  (equal
-  (eshell-git-remove-comment-string "aaa\n# bbb")
-  "aaa"))
+  (eshell-git-remove-comment-string "aaa\n\nbbb\n#ccc")
+  "aaa\n\nbbb\n"))
 
 (defun eshell-git-to-string (value)
   (cond ((stringp value) value)
@@ -152,18 +181,6 @@
       (insert-text-button
        string
        'type (intern (concat "eshell-git-" (symbol-name type)))))))
-
-(defun eshell-git-prefixp (prefix string)
-  (equal prefix (substring string 0 (min (length string) (length prefix)))))
-
-(cl-assert
- (eshell-git-prefixp "aaa" "aaabbb"))
-
-(cl-assert
- (not (eshell-git-prefixp "aaa" "aabbb")))
-
-(cl-assert
- (not (eshell-git-prefixp "aaa" "aa")))
 
 ;;; command invoke function
 
@@ -224,13 +241,16 @@
 ;;; git accessor function
 
 (defun eshell-git-parse-status (string)
-  (mapcar
-   (lambda (line) (cons (substring line 3) (substring line 0 2)))
-   (eshell-git-lines string)))
+  (delq nil
+        (mapcar
+         (lambda (line)
+           (unless (equal line "")
+             (cons (substring line 3) (substring line 0 2))))
+         (eshell-git-lines string))))
 
 (cl-assert
  (equal
-  (eshell-git-parse-status "MM aaa.el\nA  bbb.el")
+  (eshell-git-parse-status "MM aaa.el\nA  bbb.el\n")
   '(("aaa.el" . "MM") ("bbb.el" . "A "))))
 
 (defun eshell-git-get-status ()
@@ -351,7 +371,7 @@
 (cl-assert
  (equal
   (eshell-git-format-st '(("aaa.el" . "MM") ("bbb.el" . "A ")))
-  "MM aaa.el\nA  bbb.el"))
+  "MM aaa.el\nA  bbb.el\n"))
 
 (defun eshell-git-status ()
   (eshell-git-format-st (eshell-git-get-status)))

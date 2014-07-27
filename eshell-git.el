@@ -314,6 +314,15 @@
   (eshell-git-propertize-diff
    (eshell-git-invoke-command (cons "diff" args))))
 
+(defun eshell-git-get-commit-attribute (commit)
+  (eshell-git-invoke-command (list "show" "--no-patch" commit)))
+
+(defun eshell-git-get-commit (commit)
+  (concat
+   (eshell-git-get-commit-attribute commit)
+   (eshell-git-propertize-diff
+    (eshell-git-invoke-command (list "show" "--format=format:" commit)))))
+
 ;;; mode
 
 (define-derived-mode eshell-git-commit-mode text-mode "Eshell-Git-Commit"
@@ -462,7 +471,7 @@
     "show-commit"
     (lambda ()
       (insert
-       (eshell-git-invoke-command (list "show" commit)))))))
+       (eshell-git-get-commit commit))))))
 
 (defun eshell-git-plain (&rest args)
   "Just run git with given arguments."

@@ -26,8 +26,7 @@
 ;; * Use emacs buffer instead of git pager.
 
 ;; TO DO
-;; * color git show-commit
-;; * add git command config only if it is undefined in .gitconfig
+;; * clickable git status
 ;; * gradual get git log
 ;; * add option to git command
 ;; * refactoring : file separation
@@ -194,16 +193,24 @@
     ("core.editor" . "false"))
   "always add this config option to git command")
 
+(defcustom eshell-git-command-config-prefer-original
+  '("user.name" "user.email")
+  "do not add -c name=value if original config exists")
+
 (defun eshell-git-convert-config-to-option (config)
   (apply
    'append
    (mapcar
-    (lambda (entry) (list "-c" (concat (car entry) "=" (cdr entry))))
+    (lambda (entry)
+      (unless (and
+               (member (car entry) eshell-git-command-config-prefer-original)
+               (eshell-git-get-original-config (car entry)))
+        (list "-c" (concat (car entry) "=" (cdr entry)))))
     config)))
 
 (cl-assert
  (equal
-  (eshell-git-convert-config-to-option '(("aaa" . "bbb") ("ccc" . "ddd")))
+   (eshell-git-convert-config-to-option '(("aaa" . "bbb") ("ccc" . "ddd")))
   '("-c" "aaa=bbb" "-c" "ccc=ddd")))
 
 (defun eshell-git-build-option (args)
@@ -237,6 +244,11 @@
    (equal
     (eshell-git-invoke-command '("-n" 1))
     "out")))
+
+(defun eshell-git-get-original-config (name)
+  (let* ((eshell-git-command-config nil))
+    (car (eshell-git-lines
+          (eshell-git-invoke-command (list "config" name))))))
 
 ;;; git accessor function
 

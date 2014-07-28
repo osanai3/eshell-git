@@ -110,17 +110,19 @@
  (not (eshell-git-suffixp "aaa" "aa")))
 
 (defun eshell-git-lines (string)
-  (let ((index (cl-search "\n" string)))
-    (cond ((equal string "") nil)
-          (index (cons
-                  (substring string 0 index)
-                  (eshell-git-lines (substring string (+ index 1)))))
-          (t (list string)))))
+  (cond ((equal string "") nil)
+        ((eshell-git-suffixp "\n" string) (split-string (substring string 0 -1) "\n"))
+        (t (split-string string "\n"))))
 
 (cl-assert
  (equal
   (eshell-git-lines "aaa\nbbb\n\nccc\n\n")
   '("aaa" "bbb" "" "ccc" "")))
+
+(cl-assert
+ (equal
+  (eshell-git-lines "aaa\nbbb")
+  '("aaa" "bbb")))
 
 (cl-assert
  (equal
@@ -140,11 +142,14 @@
   (eshell-git-unlines '("aaa" "bbb"))
   "aaa\nbbb\n"))
 
-(defun eshell-git-comment-string (string)
+(defun eshell-git-lines-map (function string)
   (eshell-git-unlines
-   (mapcar
-    (lambda (str) (concat "# "str))
-    (eshell-git-lines string))))
+   (delq nil
+         (mapcar function
+                 (eshell-git-lines string)))))
+
+(defun eshell-git-comment-string (string)
+  (eshell-git-lines-map (lambda (str) (concat "# " str)) string))
 
 (cl-assert
  (equal
@@ -152,12 +157,9 @@
   "# aaa\n# bbb\n"))
 
 (defun eshell-git-remove-comment-string (string)
-  (eshell-git-unlines
-   (delq
-    nil
-    (mapcar
-     (lambda (str) (if (eshell-git-prefixp "#" str) nil str))
-     (eshell-git-lines string)))))
+  (eshell-git-lines-map
+   (lambda (str) (if (eshell-git-prefixp "#" str) nil str))
+   string))
 
 (cl-assert
  (equal
@@ -308,27 +310,26 @@
     (cons "log" (cons "--format=format:%h%n%s" args)))))
 
 (defun eshell-git-propertize-diff (string)
-  (eshell-git-unlines
-   (mapcar
-    (lambda (line)
-      (cond
-       ((or (eshell-git-prefixp "+++ " line)
-            (eshell-git-prefixp "--- " line))
-        (concat
-         (propertize
-          (substring line 0 4)
-          'face 'eshell-git-diff-header)
-         (propertize
-          (substring line 4)
-          'face '(eshell-git-diff-file-header eshell-git-diff-header))))
-       ((eshell-git-prefixp "@@ " line)
-        (propertize line 'face 'eshell-git-diff-hunk-header))
-       ((eshell-git-prefixp "+" line)
-        (propertize line 'face 'eshell-git-diff-added))
-       ((eshell-git-prefixp "-" line)
-        (propertize line 'face 'eshell-git-diff-removed))
-       (t line)))
-    (eshell-git-lines string))))
+  (eshell-git-lines-map
+   (lambda (line)
+     (cond
+      ((or (eshell-git-prefixp "+++ " line)
+           (eshell-git-prefixp "--- " line))
+       (concat
+        (propertize
+         (substring line 0 4)
+         'face 'eshell-git-diff-header)
+        (propertize
+         (substring line 4)
+         'face '(eshell-git-diff-file-header eshell-git-diff-header))))
+      ((eshell-git-prefixp "@@ " line)
+       (propertize line 'face 'eshell-git-diff-hunk-header))
+      ((eshell-git-prefixp "+" line)
+       (propertize line 'face 'eshell-git-diff-added))
+      ((eshell-git-prefixp "-" line)
+       (propertize line 'face 'eshell-git-diff-removed))
+      (t line)))
+   string))
 
 (defun eshell-git-get-diff (&rest args)
   (eshell-git-propertize-diff

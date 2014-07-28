@@ -134,6 +134,11 @@
   (eshell-git-lines "\n")
   '("")))
 
+(defun eshell-git-fields (string)
+  (cond ((equal string "") nil)
+        ((eshell-git-suffixp "\t" string) (split-string (substring string 0 -1) "\t"))
+        (t (split-string string "\t"))))
+
 (defun eshell-git-unlines (strings)
   (mapconcat (lambda (line) (concat line "\n")) strings ""))
 
@@ -291,24 +296,17 @@
   "Do git commit."
   (eshell-git-invoke-command (list "commit" "-m" commit-message)))
 
-(defun eshell-git-format-log (string)
-  (eshell-git-unlines
-   (eshell-git-format-log-lines
-    (eshell-git-lines string))))
-
-(defun eshell-git-format-log-lines (lines)
-  (when lines
-    (cl-destructuring-bind
-        (hash subject &rest rest) lines
-      (cons
-       (concat (eshell-git-button-string hash 'commit) "\t" subject)
-       (eshell-git-format-log-lines rest)))))
+(defun eshell-git-format-log-line (line)
+  (cl-destructuring-bind
+      (hash subject) (eshell-git-fields line)
+    (concat (eshell-git-button-string hash 'commit) "\t" subject)))
 
 (defun eshell-git-get-log (&rest args)
   "Get git log and format it."
-  (eshell-git-format-log
+  (eshell-git-lines-map
+   'eshell-git-format-log-line
    (eshell-git-invoke-command
-    (cons "log" (cons "--format=format:%h%n%s" args)))))
+    (cons "log" (cons "--format=tformat:%h\t%s" args)))))
 
 (defun eshell-git-propertize-diff (string)
   (eshell-git-lines-map

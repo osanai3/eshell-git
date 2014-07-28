@@ -268,22 +268,23 @@
 
 ;;; git accessor function
 
-(defun eshell-git-parse-status (string)
-  (delq nil
-        (mapcar
-         (lambda (line)
-           (unless (equal line "")
-             (cons (substring line 3) (substring line 0 2))))
-         (eshell-git-lines string))))
+(defun eshell-git-propertize-st (line)
+  (when (<= 2 (length line))
+    (concat
+     (if (eshell-git-prefixp "??" line)
+         (concat
+          (propertize (substring line 0 2) 'face 'eshell-git-not-staged))
+       (concat
+        (propertize (substring line 0 1) 'face 'eshell-git-staged)
+        (propertize (substring line 1 2) 'face 'eshell-git-not-staged)))
+     (substring line 2))))
 
-(cl-assert
- (equal
-  (eshell-git-parse-status "MM aaa.el\nA  bbb.el\n")
-  '(("aaa.el" . "MM") ("bbb.el" . "A "))))
+(defun eshell-git-format-status (string)
+  (eshell-git-lines-map 'eshell-git-propertize-st string))
 
 (defun eshell-git-get-status ()
   "Get git status and parse it."
-  (eshell-git-parse-status
+  (eshell-git-format-status
     (eshell-git-invoke-command '("status" "--porcelain"))))
 
 (defun eshell-git-do-commit (commit-message)
@@ -384,27 +385,8 @@
         (apply funname args)
       (apply 'eshell-git-plain (cons subcommand args)))))
 
-(defun eshell-git-propertize-st (status)
-  (if (equal status "??")
-      status
-    (concat
-     (propertize (substring status 0 1) 'face 'eshell-git-staged)
-     (propertize (substring status 1 2) 'face 'eshell-git-not-staged))))
-
-(defun eshell-git-format-st (status-alist)
-  (eshell-git-unlines
-   (mapcar
-    (lambda (status)
-      (concat (eshell-git-propertize-st (cdr status)) " " (car status)))
-    status-alist)))
-
-(cl-assert
- (equal
-  (eshell-git-format-st '(("aaa.el" . "MM") ("bbb.el" . "A ")))
-  "MM aaa.el\nA  bbb.el\n"))
-
 (defun eshell-git-status ()
-  (eshell-git-format-st (eshell-git-get-status)))
+  (eshell-git-get-status))
 
 (defun eshell-git-get-buffer (name callback)
   (let ((original-default-directory default-directory))

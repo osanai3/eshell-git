@@ -30,6 +30,7 @@
 ;; * gradual get git log
 ;; * add option to git command
 ;; * refactoring : file separation
+;; * error handling of git command
 
 ;;; Code:
 
@@ -109,16 +110,27 @@
  (not (eshell-git-suffixp "aaa" "aa")))
 
 (defun eshell-git-lines (string)
-  (let ((str
-         (if (eshell-git-suffixp "\n" string)
-             (substring string 0 (- (length string) 1))
-           string)))
-    (split-string str "\n")))
+  (let ((index (cl-search "\n" string)))
+    (cond ((equal string "") nil)
+          (index (cons
+                  (substring string 0 index)
+                  (eshell-git-lines (substring string (+ index 1)))))
+          (t (list string)))))
 
 (cl-assert
  (equal
   (eshell-git-lines "aaa\nbbb\n\nccc\n\n")
   '("aaa" "bbb" "" "ccc" "")))
+
+(cl-assert
+ (equal
+  (eshell-git-lines "")
+  nil))
+
+(cl-assert
+ (equal
+  (eshell-git-lines "\n")
+  '("")))
 
 (defun eshell-git-unlines (strings)
   (mapconcat (lambda (line) (concat line "\n")) strings ""))
@@ -230,25 +242,27 @@
        (apply-partially eshell-git-process-file-function "git" nil t nil)
        (eshell-git-build-option args)))))
 
-(let ((eshell-git-process-file-function
-       (lambda (command infile buffer display &rest args)
-         (cl-assert (equal command "git"))
-         (cl-assert (not infile))
-         (cl-assert buffer)
-         (cl-assert (not display))
-         (cl-assert (equal
-                  args
-                  (eshell-git-build-option '("-n" "1"))))
-         (insert "out"))))
+(let* ((eshell-git-command-config nil)
+       (eshell-git-process-file-function
+        (lambda (command infile buffer display &rest args)
+          (cl-assert (equal command "git"))
+          (cl-assert (not infile))
+          (cl-assert buffer)
+          (cl-assert (not display))
+          (cl-assert (equal
+                      args
+                      (eshell-git-build-option '("-n" "1"))))
+          (insert "out"))))
   (cl-assert
    (equal
     (eshell-git-invoke-command '("-n" 1))
     "out")))
 
 (defun eshell-git-get-original-config (name)
-  (let* ((eshell-git-command-config nil))
-    (car (eshell-git-lines
-          (eshell-git-invoke-command (list "config" name))))))
+  (let* ((eshell-git-command-config nil)
+         (output (car (eshell-git-lines
+                       (eshell-git-invoke-command (list "config" name))))))
+    (unless (equal output "") output)))
 
 ;;; git accessor function
 

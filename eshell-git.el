@@ -288,30 +288,24 @@
   "Do git commit."
   (eshell-git-invoke-command (list "commit" "-m" commit-message)))
 
-(defconst eshell-git-log-format-param "%h%n%an%n%ar%n%s")
+(defun eshell-git-format-log (string)
+  (eshell-git-unlines
+   (eshell-git-format-log-lines
+    (eshell-git-lines string))))
 
-(defun eshell-git-parse-log (string)
-  (eshell-git-parse-log-lines (eshell-git-lines string)))
-
-(defun eshell-git-parse-log-lines (lines)
+(defun eshell-git-format-log-lines (lines)
   (when lines
     (cl-destructuring-bind
-        (hash author-name author-date subject &rest rest) lines
+        (hash subject &rest rest) lines
       (cons
-       (list
-        (cons 'hash hash)
-        (cons 'author-name author-name)
-        (cons 'author-date author-date)
-        (cons 'subject subject))
-       (eshell-git-parse-log-lines rest)))))
+       (concat (eshell-git-button-string hash 'commit) "\t" subject)
+       (eshell-git-format-log-lines rest)))))
 
 (defun eshell-git-get-log (&rest args)
-  "Get git log and parse it."
-  (let ((format-argument
-         (format "--format=format:%s" eshell-git-log-format-param)))
-    (eshell-git-parse-log
-     (eshell-git-invoke-command
-      (cons "log" (cons format-argument args))))))
+  "Get git log and format it."
+  (eshell-git-format-log
+   (eshell-git-invoke-command
+    (cons "log" (cons "--format=format:%h%n%s" args)))))
 
 (defun eshell-git-propertize-diff (string)
   (eshell-git-unlines
@@ -472,24 +466,13 @@
     (lambda ()
       (insert (apply 'eshell-git-get-diff args))))))
 
-(defun eshell-git-format-log (log-list)
-  (eshell-git-unlines
-   (mapcar
-    (lambda (log)
-      (concat
-       (eshell-git-button-string (cdr (assoc 'hash log)) 'commit)
-       "\t"
-       (cdr (assoc 'subject log))))
-    log-list)))
-
 (defun eshell-git-log (&rest args)
   (eshell-git-pop-to-buffer
    (eshell-git-get-buffer
     "log"
     (lambda ()
       (insert
-       (eshell-git-format-log
-        (apply 'eshell-git-get-log args)))))))
+       (apply 'eshell-git-get-log args))))))
 
 (defun eshell-git-show-commit (commit)
   (eshell-git-pop-to-buffer

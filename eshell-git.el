@@ -26,7 +26,6 @@
 ;; * Use emacs buffer instead of git pager.
 
 ;; TO DO
-;; * clickable git status
 ;; * gradual get git log
 ;; * add option to git command
 ;; * refactoring : file separation
@@ -192,13 +191,28 @@
     (eshell-git-show-commit
      (buffer-substring (button-start button) (button-end button)))))
 
-(defun eshell-git-button-string (string type)
+(define-button-type 'eshell-git-diff
+  'action
+  (lambda (button)
+    (eshell-git-diff (button-get button 'file)))
+  'face 'eshell-git-not-staged)
+
+(define-button-type 'eshell-git-diff-cached
+  'action
+  (lambda (button)
+    (eshell-git-diff "--cached" (button-get button 'file)))
+  'face 'eshell-git-staged)
+
+(defun eshell-git-button-string (string type &rest args)
   (with-output-to-string
     (with-current-buffer
         standard-output
-      (insert-text-button
-       string
-       'type (intern (concat "eshell-git-" (symbol-name type)))))))
+      (apply
+       (apply-partially
+        'insert-text-button
+        string
+        'type (intern (concat "eshell-git-" (symbol-name type))))
+       args))))
 
 ;;; command invoke function
 
@@ -276,12 +290,12 @@
 (defun eshell-git-propertize-st (line)
   (when (<= 2 (length line))
     (concat
-     (if (eshell-git-prefixp "??" line)
+     (let ((file (substring line 3)))
+       (if (eshell-git-prefixp "??" line)
+           (eshell-git-button-string (substring line 0 2) 'diff 'file file)
          (concat
-          (propertize (substring line 0 2) 'face 'eshell-git-not-staged))
-       (concat
-        (propertize (substring line 0 1) 'face 'eshell-git-staged)
-        (propertize (substring line 1 2) 'face 'eshell-git-not-staged)))
+          (eshell-git-button-string (substring line 0 1) 'diff-cached 'file file)
+          (eshell-git-button-string (substring line 1 2) 'diff 'file file))))
      (substring line 2))))
 
 (defun eshell-git-format-status (string)

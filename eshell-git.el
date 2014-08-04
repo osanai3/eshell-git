@@ -208,10 +208,9 @@
     (with-current-buffer
         standard-output
       (apply
-       (apply-partially
-        'insert-text-button
-        string
-        'type (intern (concat "eshell-git-" (symbol-name type))))
+       'insert-text-button
+       string
+       'type (intern (concat "eshell-git-" (symbol-name type)))
        args))))
 
 ;;; command invoke function
@@ -260,7 +259,7 @@
     (with-current-buffer
         standard-output
       (apply
-       (apply-partially eshell-git-process-file-function "git" nil t nil)
+       eshell-git-process-file-function "git" nil t nil
        (eshell-git-build-option args)))))
 
 (let* ((eshell-git-command-config nil)
@@ -422,19 +421,19 @@
     (if alias
         (cond
          ((stringp alias)
-          (apply 'eshell-git-without-alias (cons alias args)))
+          (apply 'eshell-git-without-alias alias args))
          ((functionp alias)
           (apply alias args))
          ((and (listp alias))
           (apply 'eshell-git-without-alias (append alias args)))
          (t (error "invalid alias definition : %S" alias)))
-      (apply 'eshell-git-without-alias (cons subcommand args)))))
+      (apply 'eshell-git-without-alias subcommand args))))
 
 (defun eshell-git-without-alias (subcommand &rest args)
   (let ((funname (intern (concat "eshell-git-" subcommand))))
     (if (fboundp funname)
         (apply funname args)
-      (apply 'eshell-git-plain (cons subcommand args)))))
+      (apply 'eshell-git-plain subcommand args))))
 
 (defun eshell-git-status ()
   (eshell-git-get-status))

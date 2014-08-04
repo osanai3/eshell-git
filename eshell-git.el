@@ -26,10 +26,10 @@
 ;; * Use emacs buffer instead of git pager.
 
 ;; TO DO
-;; * gradual get git log
 ;; * add option to git command
 ;; * refactoring : file separation
 ;; * error handling of git command
+;; * delete git log button after first commit
 
 ;;; Code:
 
@@ -315,12 +315,51 @@
       (hash subject) (eshell-git-fields line)
     (concat (eshell-git-button-string hash 'commit) "\t" subject)))
 
+(defcustom eshell-git-log-max-count 20 "max-count option for git log")
+
 (defun eshell-git-get-log (&rest args)
   "Get git log and format it."
+  (concat
+   (apply 'eshell-git-get-log-partially eshell-git-log-max-count 0 args)
+   (apply 'eshell-git-log-button eshell-git-log-max-count eshell-git-log-max-count args)))
+
+(defun eshell-git-get-log-partially (max-count skip &rest args)
   (eshell-git-lines-map
    'eshell-git-format-log-line
    (eshell-git-invoke-command
-    (cons "log" (cons "--format=tformat:%h\t%s" args)))))
+    (append
+     (list
+      "log"
+      "--format=tformat:%h\t%s"
+      (format "--max-count=%d" max-count)
+      (format "--skip=%d" skip))
+     args))))
+
+(define-button-type 'eshell-git-append-log
+  'action
+  (lambda (button)
+    (let ((start (button-start button))
+          (end (button-end button))
+          (max-count (button-get button 'max-count))
+          (skip (button-get button 'skip))
+          (args (button-get button 'args)))
+      (save-excursion
+        (goto-char start)
+        (delete-region start end)
+        (insert
+         (apply 'eshell-git-get-log-partially max-count skip args)
+         (apply 'eshell-git-log-button max-count (+ skip max-count) args))))))
+
+(defun eshell-git-log-button-string (max-count skip &rest args)
+  (format "more (max-count=%d skip=%d args=%S)" max-count skip args))
+
+(defun eshell-git-log-button (max-count skip &rest args)
+  (eshell-git-button-string
+   (apply 'eshell-git-log-button-string max-count skip args)
+   'append-log
+   'max-count max-count
+   'skip skip
+   'args args))
 
 (defun eshell-git-propertize-diff (string)
   (eshell-git-lines-map

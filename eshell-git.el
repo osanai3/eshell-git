@@ -26,7 +26,8 @@
 ;; * Use emacs buffer instead of git pager.
 
 ;; TO DO
-;; * do not popup commit-message buffer when commit-message is given in command line
+;; * diff --cached in commit-message buffer
+;; * do commit by button
 ;; * refactoring : file separation
 ;; * error handling of git command
 ;; * delete git log button after first commit
@@ -487,6 +488,9 @@
       (eshell-git-commit-mode)
       (setq-local eshell-git-commit-arguments args)
       (insert (eshell-git-default-commit-message))))))
+
+(defun eshell-git-commit-no-edit (&rest args)
+  (eshell-git-invoke-command (append (list "commit" "--no-edit") args)))
 
 (defun eshell-git-help (command)
   (eshell-git-pop-to-buffer

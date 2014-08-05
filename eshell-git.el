@@ -26,7 +26,7 @@
 ;; * Use emacs buffer instead of git pager.
 
 ;; TO DO
-;; * add option to git command
+;; * do not popup commit-message buffer when commit-message is given in command line
 ;; * refactoring : file separation
 ;; * error handling of git command
 ;; * delete git log button after first commit
@@ -305,9 +305,14 @@
   (eshell-git-format-status
     (eshell-git-invoke-command '("status" "--porcelain"))))
 
+(defvar eshell-git-commit-arguments)
+
 (defun eshell-git-do-commit (commit-message)
   "Do git commit."
-  (eshell-git-invoke-command (list "commit" "-m" commit-message)))
+  (eshell-git-invoke-command
+   (append
+    (list "commit" "-m" commit-message)
+    eshell-git-commit-arguments)))
 
 (defun eshell-git-format-log-line (line)
   (cl-destructuring-bind
@@ -474,12 +479,13 @@
    (eshell-git-comment-string
     (eshell-git-invoke-command '("diff" "--cached" "--stat")))))
 
-(defun eshell-git-commit ()
+(defun eshell-git-commit (&rest args)
   (eshell-git-pop-to-buffer
    (eshell-git-get-buffer
     "commit"
     (lambda ()
       (eshell-git-commit-mode)
+      (setq-local eshell-git-commit-arguments args)
       (insert (eshell-git-default-commit-message))))))
 
 (defun eshell-git-help (command)

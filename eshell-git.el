@@ -26,7 +26,6 @@
 ;; * Use emacs buffer instead of git pager.
 
 ;; TO DO
-;; * diff --cached in commit-message buffer
 ;; * refactoring : file separation
 ;; * error handling of git command
 ;; * delete git log button after first commit
@@ -456,7 +455,7 @@
    (eshell-git-button-string "commit" 'do-commit-by-above-message
                              'eshell-git-commit-argument args)
    "\n"
-   (eshell-git-invoke-command '("diff" "--cached" "--stat"))))
+   (eshell-git-get-diff "--cached")))
 
 (defun eshell-git-commit (&rest args)
   (eshell-git-pop-to-buffer

@@ -308,11 +308,12 @@
 
 (defvar eshell-git-commit-arguments)
 
-(defun eshell-git-do-commit (commit-message)
+(defun eshell-git-do-commit (commit-message &rest args)
   "Do git commit."
   (eshell-git-invoke-command
    (append
     (list "commit" "-m" commit-message)
+    args
     eshell-git-commit-arguments)))
 
 (defun eshell-git-format-log-line (line)
@@ -474,9 +475,21 @@
   (goto-char (point-min))
   buffer)
 
-(defun eshell-git-default-commit-message ()
+(define-button-type 'eshell-git-do-commit-by-above-message
+  'action
+  (lambda (button)
+    (message
+     (apply 'eshell-git-do-commit
+            (buffer-substring (point-min) (button-start button))
+            (button-get button 'eshell-git-commit-argument)))
+    (kill-buffer)))
+
+(defun eshell-git-default-commit-message (args)
   (concat
    "\n\n"
+   (eshell-git-button-string "commit" 'do-commit-by-above-message
+                             'eshell-git-commit-argument args)
+   "\n"
    (eshell-git-comment-string
     (eshell-git-invoke-command '("diff" "--cached" "--stat")))))
 
@@ -487,7 +500,7 @@
     (lambda ()
       (eshell-git-commit-mode)
       (setq-local eshell-git-commit-arguments args)
-      (insert (eshell-git-default-commit-message))))))
+      (insert (eshell-git-default-commit-message args))))))
 
 (defun eshell-git-commit-no-edit (&rest args)
   (eshell-git-invoke-command (append (list "commit" "--no-edit") args)))

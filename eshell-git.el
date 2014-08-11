@@ -27,7 +27,6 @@
 
 ;; TO DO
 ;; * diff --cached in commit-message buffer
-;; * do commit by button
 ;; * refactoring : file separation
 ;; * error handling of git command
 ;; * delete git log button after first commit
@@ -153,29 +152,10 @@
          (mapcar function
                  (eshell-git-lines string)))))
 
-(defun eshell-git-comment-string (string)
-  (eshell-git-lines-map (lambda (str) (concat "# " str)) string))
-
-(cl-assert
- (equal
-  (eshell-git-comment-string "aaa\nbbb")
-  "# aaa\n# bbb\n"))
-
-(defun eshell-git-remove-comment-string (string)
-  (eshell-git-lines-map
-   (lambda (str) (if (eshell-git-prefixp "#" str) nil str))
-   string))
-
-(cl-assert
- (equal
-  (eshell-git-remove-comment-string "aaa\n\nbbb\n#ccc")
-  "aaa\n\nbbb\n"))
-
 (defun eshell-git-to-string (value)
   (cond ((stringp value) value)
         ((numberp value) (number-to-string value))
-        (t (error "eshell-git-to-string : Cannot convert to string %S" value))
-   ))
+        (t (error "eshell-git-to-string : Cannot convert to string %S" value))))
 
 (cl-assert
  (equal
@@ -306,15 +286,12 @@
   (eshell-git-format-status
     (eshell-git-invoke-command '("status" "--porcelain"))))
 
-(defvar eshell-git-commit-arguments)
-
 (defun eshell-git-do-commit (commit-message &rest args)
   "Do git commit."
   (eshell-git-invoke-command
    (append
     (list "commit" "-m" commit-message)
-    args
-    eshell-git-commit-arguments)))
+    args)))
 
 (defun eshell-git-format-log-line (line)
   (cl-destructuring-bind
@@ -402,17 +379,6 @@
    (eshell-git-propertize-diff
     (eshell-git-invoke-command (list "show" "--format=format:" commit)))))
 
-;;; mode
-
-(define-derived-mode eshell-git-commit-mode text-mode "Eshell-Git-Commit"
-  "commit mode used by eshell-git"
-  (defun eshell-git-do-commit-from-buffer ()
-    (interactive)
-    (message
-     (eshell-git-do-commit (eshell-git-remove-comment-string (buffer-string))))
-    (kill-buffer))
-  (define-key eshell-git-commit-mode-map (kbd "C-c C-c") 'eshell-git-do-commit-from-buffer))
-
 ;;; user interface function
 
 (defcustom eshell-git-alias-list
@@ -490,16 +456,13 @@
    (eshell-git-button-string "commit" 'do-commit-by-above-message
                              'eshell-git-commit-argument args)
    "\n"
-   (eshell-git-comment-string
-    (eshell-git-invoke-command '("diff" "--cached" "--stat")))))
+   (eshell-git-invoke-command '("diff" "--cached" "--stat"))))
 
 (defun eshell-git-commit (&rest args)
   (eshell-git-pop-to-buffer
    (eshell-git-get-buffer
     "commit"
     (lambda ()
-      (eshell-git-commit-mode)
-      (setq-local eshell-git-commit-arguments args)
       (insert (eshell-git-default-commit-message args))))))
 
 (defun eshell-git-commit-no-edit (&rest args)

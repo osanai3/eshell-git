@@ -7,4 +7,3 @@ mkdir -p $DIR
 cp *.el README $DIR
 tar -c -f $TAR $DIR
 rm -rf $DIR
-export RELEASE_FILE=$TAR

@@ -1,0 +1,10 @@
+script: ./pack.sh
+deploy:
+ provider: releases
+ api-key:
+  secure: "IO/7aBCdynBiAi2mFuRIMl5VZ2q7qGO1MVdZuI8AFEnUTLpomiRbs/fyEAaRpjAp63hC3W2UEBOySQHz921TEA31GKx+tdc07CmzbBqplW0nFZUYNM5bHDgSUbjdQfvhlMkImdUtxJi1dLsf0pvI2b+EphWsgO8JUX0hsJj1/3U="
+ file: "eshell-git-0.1.tar"
+ skip_cleanup: true
+ on:
+  tags: true
+  all_branches: true

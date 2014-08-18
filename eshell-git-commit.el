@@ -32,7 +32,7 @@
 (define-button-type 'eshell-git-do-commit-by-above-message
   'action
   (lambda (button)
-    (message
+    (message "%s"
      (apply 'eshell-git-do-commit
             (buffer-substring (point-min) (button-start button))
             (button-get button 'eshell-git-commit-argument)))

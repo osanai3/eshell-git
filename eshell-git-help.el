@@ -1,4 +1,4 @@
-;;; eshell-git.el --- git frontend for eshell -*- lexical-binding: t; -*-
+;;; eshell-git-help.el --- git help for eshell -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2014 by Koichi Osanai
 
@@ -17,23 +17,21 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;; TO DO
-;; * error handling of git command
-;; * delete git log button after first commit
-
 ;;; Code:
 
 (require 'eshell-git-core)
-(require 'eshell-git-status)
-(require 'eshell-git-commit)
-(require 'eshell-git-log)
-(require 'eshell-git-show-commit)
-(require 'eshell-git-diff)
-(require 'eshell-git-help)
+(require 'man)
 
-(defun eshell-git-start ()
-  (fset 'eshell/git (symbol-function 'eshell-git)))
+(defun eshell-git-help (command)
+  (eshell-git-pop-to-buffer
+   (eshell-git-get-buffer
+    (format "help %s" command)
+    (lambda ()
+      (insert (eshell-git-invoke-command (list "help" command)))
+      (Man-fontify-manpage)
+      (Man-mode)
+      ))))
 
-(provide 'eshell-git)
+(provide 'eshell-git-help)
 
-;;; eshell-git.el ends here
+;;; eshell-git-help.el ends here

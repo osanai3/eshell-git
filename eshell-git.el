@@ -18,7 +18,6 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;; TO DO
-;; * error handling of git command
 ;; * delete git log button after first commit
 
 ;;; Code:

@@ -49,7 +49,7 @@
 (defun eshell-git-get-status ()
   "Get git status and parse it."
   (eshell-git-format-status
-    (eshell-git-invoke-command '("status" "--porcelain"))))
+    (eshell-git-invoke-command '("status" "--short"))))
 
 (defun eshell-git-status ()
   (eshell-git-get-status))

@@ -175,7 +175,7 @@
              (apply
               eshell-git-process-file-function "git" nil t nil
               (eshell-git-build-option args)))))
-      (unless (eq ret 0) (throw 'eshell-git-command-error ret)))))
+      (unless (eq ret 0) (throw 'eshell-git-command-error (cons args ret))))))
 
 (let* ((eshell-git-command-config nil)
        (eshell-git-process-file-function
@@ -196,9 +196,11 @@
 
 (defun eshell-git-get-original-config (name)
   (let* ((eshell-git-command-config nil)
-         (output (car (eshell-git-lines
-                       (eshell-git-invoke-command (list "config" name))))))
-    (unless (equal output "") output)))
+         (output
+          (catch 'eshell-git-command-error
+            (car (eshell-git-lines
+                  (eshell-git-invoke-command (list "config" name)))))))
+    (when (stringp output) output)))
 
 ;;; user interface function
 

@@ -66,6 +66,10 @@
     (eshell-git-delete-blame-commit)
     (set-buffer-modified-p nil)))
 
+(defun eshell-git-blame (file)
+  (find-file file)
+  (eshell-git-blame-mode))
+
 (provide 'eshell-git-blame)
 
 ;;; eshell-git-blame.el ends here

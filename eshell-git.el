@@ -29,6 +29,7 @@
 (require 'eshell-git-show-commit)
 (require 'eshell-git-diff)
 (require 'eshell-git-help)
+(require 'eshell-git-blame)
 
 (defun eshell-git-start ()
   (fset 'eshell/git (symbol-function 'eshell-git)))

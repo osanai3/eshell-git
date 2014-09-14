@@ -168,14 +168,17 @@
 
 (defun eshell-git-invoke-command (args)
   "Run git command with args."
-  (with-output-to-string
-    (let ((ret
-           (with-current-buffer
-               standard-output
-             (apply
-              eshell-git-process-file-function "git" nil t nil
-              (eshell-git-build-option args)))))
-      (unless (eq ret 0) (throw 'eshell-git-command-error (cons args ret))))))
+  (let ((ret nil))
+    (let ((output
+           (with-output-to-string
+             (setq ret
+                   (with-current-buffer
+                       standard-output
+                     (apply
+                      eshell-git-process-file-function "git" nil t nil
+                      (eshell-git-build-option args)))))))
+      (if (eq ret 0) output
+        (throw 'eshell-git-command-error (list output args ret))))))
 
 (let* ((eshell-git-command-config nil)
        (eshell-git-process-file-function

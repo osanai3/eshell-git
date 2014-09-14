@@ -37,12 +37,17 @@
    (eshell-git-invoke-command (list "blame" "-s" "--root" file))))
 
 (defun eshell-git-insert-blame-commit ()
-  (save-excursion
-    (goto-char 0)
-    (mapc
-     (lambda (button)
-       (insert button " ") (forward-line 1) (beginning-of-line))
-     (eshell-git-lines (eshell-git-get-blame-lines (buffer-file-name))))))
+  (let ((localname
+         (if (tramp-tramp-file-p (buffer-file-name))
+             (tramp-file-name-localname
+              (tramp-dissect-file-name (buffer-file-name)))
+           (buffer-file-name))))
+    (save-excursion
+      (goto-char 0)
+      (mapc
+       (lambda (button)
+         (insert button " ") (forward-line 1) (beginning-of-line))
+       (eshell-git-lines (eshell-git-get-blame-lines localname))))))
 
 (defun eshell-git-delete-blame-commit ()
   (save-excursion

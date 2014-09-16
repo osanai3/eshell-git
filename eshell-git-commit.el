@@ -38,8 +38,9 @@
             (button-get button 'eshell-git-commit-argument)))
     (kill-buffer)))
 
-(defun eshell-git-default-commit-message (args)
+(defun eshell-git-commit-initial-buffer-content (default-commit-message args)
   (concat
+   default-commit-message
    "\n\n"
    (eshell-git-button-string "commit" 'do-commit-by-above-message
                              'eshell-git-commit-argument args)
@@ -47,15 +48,25 @@
    (eshell-git-get-diff "--cached")))
 
 (defun eshell-git-commit (&rest args)
-  (eshell-git-pop-to-buffer
-   (eshell-git-get-buffer
-    "commit"
-    (lambda ()
-      (insert (eshell-git-default-commit-message args))))))
+  (let ((default-commit-message (eshell-git-default-commit-message args)))
+    (if default-commit-message
+        (eshell-git-pop-to-buffer
+         (eshell-git-get-buffer
+          "commit"
+          (lambda ()
+            (insert
+             (eshell-git-commit-initial-buffer-content
+              default-commit-message args)))))
+      (eshell-git-invoke-command (cons "commit" args)))))
 
 (defun eshell-git-commit-no-edit (&rest args)
   (eshell-git-invoke-command (append (list "commit" "--no-edit") args)))
 
+(defun eshell-git-default-commit-message (args)
+  "Return default commit message. If edit buffer is not required, return nil."
+  ;; TODO : detect -C, --reuser-message, -F, --file, -c, --reedit-message, -t, --template, --amend, -e, --edit, --no-edit
+  ;; FIXME : misjudge "git commit -t -m"
+  (unless (member "-m" args) ""))
 
 (provide 'eshell-git-commit)
 

@@ -19,7 +19,6 @@
 
 ;; TO DO
 ;; * clickable git branch
-;; * detect requirement of commit mesage (& remove commit-no-edit)
 ;; * git merge
 ;; * delete git log button after first commit
 

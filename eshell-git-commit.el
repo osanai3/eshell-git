@@ -59,14 +59,21 @@
               default-commit-message args)))))
       (eshell-git-invoke-command (cons "commit" args)))))
 
-(defun eshell-git-commit-no-edit (&rest args)
-  (eshell-git-invoke-command (append (list "commit" "--no-edit") args)))
-
 (defun eshell-git-default-commit-message (args)
   "Return default commit message. If edit buffer is not required, return nil."
-  ;; TODO : detect -C, --reuser-message, -F, --file, -c, --reedit-message, -t, --template, --amend, -e, --edit, --no-edit
+  ;; TODO : detect --reuser-message, --file, -c, --reedit-message, -t, --template, -e, --edit
   ;; FIXME : misjudge "git commit -t -m"
-  (unless (member "-m" args) ""))
+  (cond
+   ((or (member "-m" args)
+        (member "--no-edit" args)
+        (member "-C" args)
+        (member "-F" args))
+    nil)
+   ((member "--amend" args) (eshell-git-get-commit-message "HEAD"))
+   (t "")))
+
+(defun eshell-git-get-commit-message (commit)
+  (eshell-git-invoke-command (list "log" "-n" 1 "--pretty=format:%B" commit)))
 
 (provide 'eshell-git-commit)
 

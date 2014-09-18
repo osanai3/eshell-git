@@ -1,4 +1,4 @@
-;;; eshell-git.el --- git frontend for eshell -*- lexical-binding: t; -*-
+;;; eshell-git-branch.el --- git branch for eshell -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2014 by Koichi Osanai
 
@@ -17,24 +17,30 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;; TO DO
-;; * git merge
-;; * delete git log button after first commit
-
 ;;; Code:
 
 (require 'eshell-git-core)
-(require 'eshell-git-status)
-(require 'eshell-git-commit)
-(require 'eshell-git-log)
-(require 'eshell-git-show-commit)
-(require 'eshell-git-diff)
-(require 'eshell-git-help)
-(require 'eshell-git-blame)
 
-(defun eshell-git-start ()
-  (fset 'eshell/git (symbol-function 'eshell-git)))
+(define-button-type 'eshell-git-checkout-branch
+  'action
+  (lambda (button)
+    (message
+     (eshell-git-invoke-command
+      (list "checkout"
+            (buffer-substring (button-start button) (button-end button)))))))
 
-(provide 'eshell-git)
+(defun eshell-git-format-branch (string)
+  (eshell-git-lines-map
+   (lambda (line)
+     (let ((prefix (substring line 0 2))
+           (branch (substring line 2)))
+       (concat prefix (eshell-git-button-string branch 'checkout-branch))))
+   string))
 
-;;; eshell-git.el ends here
+(defun eshell-git-branch (&rest args)
+  (eshell-git-format-branch
+   (eshell-git-invoke-command (cons "branch" args))))
+
+(provide 'eshell-git-branch)
+
+;;; eshell-git-branch.el ends here

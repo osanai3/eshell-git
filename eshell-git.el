@@ -31,6 +31,7 @@
 (require 'eshell-git-diff)
 (require 'eshell-git-help)
 (require 'eshell-git-blame)
+(require 'eshell-git-branch)
 
 (defun eshell-git-start ()
   (fset 'eshell/git (symbol-function 'eshell-git)))
